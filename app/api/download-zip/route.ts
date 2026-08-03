@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import * as archiver from "archiver";
+import * as _archiver from "archiver";
 import { Readable } from "stream";
 import { extractDriveIds, GOOGLE_NATIVE_MAPPING } from "@/lib/gdrive";
 
@@ -9,12 +9,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Handle CommonJS / ESM Interop for archiver
-function createArchiverInstance(format: string, options: Record<string, unknown>) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const archiverFunc = (archiver as any).default || archiver;
-  return archiverFunc(format, options);
-}
+// Handle CommonJS / ESM Interop for archiver safely for all runtime conditions
+// Namespace import is cast dynamically to ensure it can be invoked as a function.
+const archiver = (typeof _archiver === "function" ? _archiver : (_archiver as unknown as { default: typeof _archiver }).default) as typeof _archiver;
 
 export async function POST(req: Request) {
   try {
@@ -71,7 +68,8 @@ export async function POST(req: Request) {
     }
 
     // 4. Initialize Archiver ZIP stream
-    const archive = createArchiverInstance("zip", { zlib: { level: 9 } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const archive = (archiver as any)("zip", { zlib: { level: 9 } });
 
     // Handle archiver errors
     archive.on("error", (err: Error) => {

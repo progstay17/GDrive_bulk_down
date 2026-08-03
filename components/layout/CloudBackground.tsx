@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, memo } from "react";
 import { TimelineStage } from "../timeline/ProgressTimeline";
 
 interface CloudBackgroundProps {
@@ -18,7 +18,7 @@ interface Particle {
   color: string;
 }
 
-export default function CloudBackground({ currentStage }: CloudBackgroundProps) {
+function CloudBackgroundComponent({ currentStage }: CloudBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const stageRef = useRef<TimelineStage>(currentStage);
 
@@ -251,3 +251,6 @@ export default function CloudBackground({ currentStage }: CloudBackgroundProps) 
     />
   );
 }
+
+const CloudBackground = memo(CloudBackgroundComponent);
+export default CloudBackground;

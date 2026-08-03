@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import archiver from "archiver";
 import { Readable } from "stream";
 import { extractDriveIds, GOOGLE_NATIVE_MAPPING } from "@/lib/gdrive";
@@ -66,8 +64,7 @@ export async function POST(req: Request) {
     }
 
     // 4. Initialize Archiver ZIP stream
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const archive = (archiver as any)("zip", { zlib: { level: 9 } });
+    const archive = archiver("zip", { zlib: { level: 9 } });
 
     // Handle archiver errors
     archive.on("error", (err: Error) => {

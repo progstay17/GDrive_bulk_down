@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import * as _archiver from "archiver";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import archiver from "archiver";
 import { Readable } from "stream";
 import { extractDriveIds, GOOGLE_NATIVE_MAPPING } from "@/lib/gdrive";
 
@@ -8,11 +10,6 @@ import { extractDriveIds, GOOGLE_NATIVE_MAPPING } from "@/lib/gdrive";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-// Handle CommonJS / ESM Interop for archiver safely for all runtime conditions.
-// Prevents classic "m is not a function" minification interop issues in production.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const archiver = (typeof _archiver === "function" ? _archiver : (_archiver as unknown as { default: unknown }).default || _archiver) as any;
 
 export async function POST(req: Request) {
   try {
@@ -69,7 +66,8 @@ export async function POST(req: Request) {
     }
 
     // 4. Initialize Archiver ZIP stream
-    const archive = archiver("zip", { zlib: { level: 9 } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const archive = (archiver as any)("zip", { zlib: { level: 9 } });
 
     // Handle archiver errors
     archive.on("error", (err: Error) => {

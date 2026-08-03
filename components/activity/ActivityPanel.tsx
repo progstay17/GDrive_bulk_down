@@ -53,14 +53,14 @@ export default function ActivityPanel({ events }: ActivityPanelProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-900 p-6 shadow-sm transition-colors duration-300">
+    <div className="bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-900 p-6 shadow-sm transition-all duration-300">
       <h3 className="text-sm font-bold text-slate-800 dark:text-navy-100 uppercase tracking-wider mb-4">
         Activity Workspace Log
       </h3>
 
       {events.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-center text-slate-400 dark:text-navy-600">
-          <svg className="w-8 h-8 opacity-60 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-8 h-8 opacity-60 mb-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           <span className="text-xs">No workspace activities reported yet.</span>
@@ -68,7 +68,10 @@ export default function ActivityPanel({ events }: ActivityPanelProps) {
       ) : (
         <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
           {events.map((event) => (
-            <div key={event.id} className="flex gap-3 items-start text-xs border-b border-slate-50 dark:border-navy-900/40 pb-3 last:border-0 last:pb-0">
+            <div
+              key={event.id}
+              className="flex gap-3 items-start text-xs border-b border-slate-50 dark:border-navy-900/40 pb-3 last:border-0 last:pb-0 animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out"
+            >
               {getIcon(event.type)}
 
               <div className="flex-1 min-w-0">

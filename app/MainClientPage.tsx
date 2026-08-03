@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { extractDriveIds } from "@/lib/gdrive";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import CloudBackground from "@/components/layout/CloudBackground";
 import UploadWorkspace from "@/components/workspace/UploadWorkspace";
 import SummaryPanel from "@/components/summary/SummaryPanel";
 import ProgressTimeline, { TimelineStage } from "@/components/timeline/ProgressTimeline";
@@ -32,6 +33,7 @@ export default function MainClientPage({
   const [timelineStage, setTimelineStage] = useState<TimelineStage>("idle");
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [zipBlobUrl, setZipBlobUrl] = useState<string | undefined>(undefined);
+  const [isIlluminated, setIsIlluminated] = useState(false);
   const [zipDetails, setZipDetails] = useState<{ totalFiles: number; size: string }>({
     totalFiles: 0,
     size: "Calculating...",
@@ -187,6 +189,13 @@ export default function MainClientPage({
       setDownloadSuccess(true);
       setTimelineStage("ready");
       addEvent("success", "ZIP Created", `Successfully packed and downloaded ${files.length} items (${sizeInMB} MB).`);
+
+      // Gentle breath background illumination effect for 800ms
+      setIsIlluminated(true);
+      setTimeout(() => {
+        setIsIlluminated(false);
+      }, 800);
+
     } catch (err: unknown) {
       console.error(err);
 
@@ -225,7 +234,12 @@ export default function MainClientPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-navy-950 text-slate-800 dark:text-navy-100 font-sans transition-colors duration-300">
+    <div className={`min-h-screen bg-slate-50 dark:bg-navy-950 text-slate-800 dark:text-navy-100 font-sans transition-all duration-[800ms] ease-in-out ${
+      isIlluminated ? "brightness-[1.04] dark:brightness-110 saturate-[1.05]" : ""
+    }`}>
+      {/* High-performance HTML5 Canvas dynamic particle system */}
+      <CloudBackground currentStage={timelineStage} />
+
       {/* Header Layout */}
       <Header
         enableOAuth={enableOAuth}
@@ -245,11 +259,11 @@ export default function MainClientPage({
         </p>
       </section>
 
-      {/* Main Workspace Workspace */}
+      {/* Main Workspace */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-          {/* Workspace Left Area (Upload Workspace and Success/Error States) */}
+          {/* Workspace Left Area */}
           <div className="lg:col-span-8 flex flex-col gap-6">
 
             {/* Redesigned Workspace Input */}
@@ -260,6 +274,7 @@ export default function MainClientPage({
               onDownload={handleDownload}
               detectedFilesCount={files.length}
               ignoredFoldersCount={folders.length}
+              currentStage={timelineStage}
             />
 
             {/* Error Container */}
@@ -283,7 +298,7 @@ export default function MainClientPage({
 
             {/* Information Grid for extra guides */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-2">
-              <div className="bg-white dark:bg-navy-950 p-6 rounded-2xl border border-slate-200 dark:border-navy-900 transition-colors duration-300">
+              <div className="bg-white/80 dark:bg-navy-950/80 p-6 rounded-2xl border border-slate-200 dark:border-navy-900 transition-colors duration-300 backdrop-blur-sm">
                 <h4 className="text-xs font-bold text-slate-800 dark:text-navy-200 uppercase tracking-wider mb-2">
                   System Directions
                 </h4>
@@ -292,7 +307,7 @@ export default function MainClientPage({
                 </p>
               </div>
 
-              <div className="bg-white dark:bg-navy-950 p-6 rounded-2xl border border-slate-200 dark:border-navy-900 transition-colors duration-300">
+              <div className="bg-white/80 dark:bg-navy-950/80 p-6 rounded-2xl border border-slate-200 dark:border-navy-900 transition-colors duration-300 backdrop-blur-sm">
                 <h4 className="text-xs font-bold text-slate-800 dark:text-navy-200 uppercase tracking-wider mb-2">
                   Supported Patterns
                 </h4>
@@ -304,7 +319,7 @@ export default function MainClientPage({
 
           </div>
 
-          {/* Workspace Right Area (Summary and Progress Workflow Logs) */}
+          {/* Workspace Right Area */}
           <div className="lg:col-span-4 flex flex-col gap-6">
 
             {/* Live Summary Panel */}

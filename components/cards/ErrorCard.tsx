@@ -16,7 +16,7 @@ export default function ErrorCard({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="bg-red-50/50 dark:bg-red-950/10 border border-red-200 dark:border-red-900/50 rounded-2xl p-6 shadow-sm transition-colors duration-300">
+    <div className="bg-red-50/50 dark:bg-red-950/10 border border-red-200 dark:border-red-900/50 rounded-2xl p-6 shadow-sm transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 ease-out">
       <div className="flex items-start gap-4">
         <div className="p-2 bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl border border-red-500/20 shrink-0">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,7 +28,7 @@ export default function ErrorCard({
           <h3 className="text-base font-bold text-slate-900 dark:text-white">
             Download Encountered an Error
           </h3>
-          <p className="text-xs text-red-700 dark:text-red-400 mt-1 font-semibold">
+          <p className="text-xs text-red-700 dark:text-red-400 mt-1 font-semibold leading-relaxed">
             {summary}
           </p>
 
@@ -36,12 +36,12 @@ export default function ErrorCard({
             <div className="mt-3">
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="text-xs font-semibold text-slate-500 dark:text-navy-400 hover:text-slate-800 dark:hover:text-navy-200 flex items-center gap-1 focus:outline-none"
+                className="text-xs font-semibold text-slate-500 dark:text-navy-400 hover:text-slate-800 dark:hover:text-navy-200 flex items-center gap-1 focus:outline-none transition-colors"
                 type="button"
               >
                 <span>{expanded ? "Hide technical logs" : "Show technical logs"}</span>
                 <svg
-                  className={`w-3.5 h-3.5 transform transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+                  className={`w-3.5 h-3.5 transform transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -50,18 +50,22 @@ export default function ErrorCard({
                 </svg>
               </button>
 
-              {expanded && (
-                <pre className="mt-2 p-3 bg-slate-900 text-slate-100 font-mono text-[11px] rounded-xl overflow-x-auto max-h-[150px] leading-relaxed border border-slate-800">
+              <div
+                className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                  expanded ? "max-h-[200px] opacity-100 mt-2" : "max-h-0 opacity-0"
+                }`}
+              >
+                <pre className="p-3 bg-slate-900 text-slate-100 font-mono text-[11px] rounded-xl overflow-x-auto leading-relaxed border border-slate-800">
                   {details}
                 </pre>
-              )}
+              </div>
             </div>
           )}
 
           <div className="mt-4 flex items-center gap-3">
             <button
               onClick={onRetry}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold text-xs py-2 px-4 rounded-lg transition shadow-sm hover:shadow"
+              className="bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white font-semibold text-xs py-2 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow focus:outline-none focus:ring-4 focus:ring-red-500/20"
               type="button"
             >
               Retry Download

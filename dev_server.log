@@ -1,0 +1,14 @@
+
+> gdrive-zip@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 1777ms
+ ○ Compiling / ...
+ ✓ Compiled / in 4.7s (530 modules)
+ HEAD / 200 in 4997ms
+ ✓ Compiled in 426ms (244 modules)
+ GET / 200 in 74ms

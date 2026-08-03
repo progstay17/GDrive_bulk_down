@@ -69,7 +69,7 @@ export default function UploadWorkspace({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`relative w-full rounded-2xl border-2 p-6 transition-all duration-500 ease-out ${
+      className={`relative w-full rounded-2xl border p-6 transition-all duration-500 ease-out ${
         isDragOver
           ? "border-blue-500 bg-blue-50/30 dark:bg-blue-950/5 shadow-lg scale-[1.01] -translate-y-0.5"
           : isDropped

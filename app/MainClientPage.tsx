@@ -39,6 +39,12 @@ export default function MainClientPage({
     size: "Calculating...",
   });
 
+  // Smart Download Mode states
+  const [downloadSeparateFiles, setDownloadSeparateFiles] = useState(false);
+  const [showWarningBanner, setShowWarningBanner] = useState(false);
+  const [totalSize, setTotalSize] = useState(0);
+  const [filesMetadata, setFilesMetadata] = useState<Array<{ id: string; name: string; size: number }>>([]);
+
   // Unique key helper for logs
   const addEvent = (type: ActivityEvent["type"], title: string, description: string) => {
     const newEvent: ActivityEvent = {
@@ -92,6 +98,67 @@ export default function MainClientPage({
     return () => clearTimeout(timer);
   }, [inputText, files.length, folders.length]);
 
+  // Fetch metadata to calculate totalSize and set up threshold warnings
+  useEffect(() => {
+    if (files.length === 0) {
+      setTotalSize(0);
+      setFilesMetadata([]);
+      setShowWarningBanner(false);
+      setDownloadSeparateFiles(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const fetchMetadata = async () => {
+      try {
+        const fileIds = files.map((f) => f.id);
+        const res = await fetch("/api/files-metadata", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ fileIds }),
+          signal: controller.signal,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.files)) {
+            setFilesMetadata(data.files);
+
+            let sum = 0;
+            for (const f of data.files) {
+              if (f.size) {
+                sum += f.size;
+              }
+            }
+            setTotalSize(sum);
+
+            // If totalSize >= 250 MB
+            if (sum >= 250 * 1024 * 1024) {
+              setDownloadSeparateFiles(true);
+              setShowWarningBanner(true);
+              addEvent("warning", "Threshold Warning", "Total payload exceeds 250 MB. Preemptively selected 'Separate Files' mode.");
+            } else {
+              setShowWarningBanner(false);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Metadata fetch aborted or failed:", err);
+      }
+    };
+
+    const delayTimer = setTimeout(() => {
+      fetchMetadata();
+    }, 800);
+
+    return () => {
+      clearTimeout(delayTimer);
+      controller.abort();
+    };
+  }, [files]);
+
   // Local categorizer for Summary Panel
   const fileCategories = useMemo(() => {
     let images = 0;
@@ -124,6 +191,63 @@ export default function MainClientPage({
     // Progressive timeline stage transitions representing actual state machine lifecycles
     setTimelineStage("permissions");
     addEvent("info", "Authenticating Request", "Verifying GDrive API authority and validating scopes.");
+
+    if (downloadSeparateFiles) {
+      try {
+        await new Promise((r) => setTimeout(r, 600));
+        setTimelineStage("metadata");
+        addEvent("info", "Initiating Separate Downloads", `Starting sequential direct downloads for ${files.length} items.`);
+
+        for (let i = 0; i < files.length; i++) {
+          const item = files[i];
+          const meta = filesMetadata.find((m) => m.id === item.id);
+          const displayName = meta && meta.name !== "unresolved_name" ? meta.name : `File ${item.id}`;
+
+          setTimelineStage("packaging");
+          addEvent("info", `Downloading ${i + 1}/${files.length}`, `Starting separate file download ${i + 1} of ${files.length}: ${displayName}`);
+
+          // Trigger download link pointing to /api/download-single?id=<id>
+          const a = document.createElement("a");
+          a.href = `/api/download-single?id=${item.id}`;
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+
+          // 1200ms delay to avoid popup blocking
+          if (i < files.length - 1) {
+            await new Promise((r) => setTimeout(r, 1200));
+          }
+        }
+
+        setZipDetails({
+          totalFiles: files.length,
+          size: totalSize > 0 ? `${(totalSize / (1024 * 1024)).toFixed(2)} MB` : "—",
+        });
+        setDownloadSuccess(true);
+        setTimelineStage("ready");
+        addEvent("success", "Downloads Triggered", `Successfully started individual downloads for all ${files.length} items.`);
+
+        // Gentle breath background illumination effect for 800ms
+        setIsIlluminated(true);
+        setTimeout(() => {
+          setIsIlluminated(false);
+        }, 800);
+
+      } catch (err: unknown) {
+        console.error(err);
+        let summary = "An unknown error occurred during separate downloads.";
+        if (err && typeof err === "object" && "message" in err) {
+          summary = String((err as { message: unknown }).message);
+        }
+        setError(summary);
+        setTimelineStage("idle");
+        addEvent("error", "Process Failed", summary);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
 
     try {
       // Transition to metadata fetching
@@ -275,6 +399,9 @@ export default function MainClientPage({
               detectedFilesCount={files.length}
               ignoredFoldersCount={folders.length}
               currentStage={timelineStage}
+              downloadSeparateFiles={downloadSeparateFiles}
+              setDownloadSeparateFiles={setDownloadSeparateFiles}
+              showWarningBanner={showWarningBanner}
             />
 
             {/* Error Container */}
@@ -291,7 +418,7 @@ export default function MainClientPage({
               <SuccessCard
                 totalFiles={zipDetails.totalFiles}
                 zipSize={zipDetails.size}
-                downloadUrl={zipBlobUrl}
+                downloadUrl={downloadSeparateFiles ? undefined : zipBlobUrl}
                 onDownloadAgain={handleDownload}
               />
             )}
@@ -330,12 +457,12 @@ export default function MainClientPage({
               duplicateLinksCount={duplicatesCount}
               loading={loading}
               serverData={{
-                estimatedZipSize: loading ? "Analyzing..." : downloadSuccess ? zipDetails.size : "—",
+                estimatedZipSize: loading ? "Analyzing..." : (totalSize > 0 ? `${(totalSize / (1024 * 1024)).toFixed(2)} MB` : "—"),
                 imagesCount: files.length > 0 ? fileCategories.images : "—",
                 videosCount: files.length > 0 ? fileCategories.videos : "—",
                 documentsCount: files.length > 0 ? fileCategories.documents : "—",
-                publicFilesCount: loading ? "Querying..." : downloadSuccess ? files.length : "—",
-                privateFilesCount: loading ? "Validating..." : downloadSuccess ? 0 : "—",
+                publicFilesCount: loading ? "Querying..." : (downloadSuccess ? files.length : files.length > 0 ? files.length : "—"),
+                privateFilesCount: loading ? "Validating..." : "0",
               }}
             />
 

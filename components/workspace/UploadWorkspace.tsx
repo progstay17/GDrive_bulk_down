@@ -12,6 +12,10 @@ interface UploadWorkspaceProps {
   detectedFilesCount: number;
   ignoredFoldersCount: number;
   currentStage: TimelineStage;
+  // Smart Download Mode additions
+  downloadSeparateFiles: boolean;
+  setDownloadSeparateFiles: (val: boolean) => void;
+  showWarningBanner: boolean;
 }
 
 export default function UploadWorkspace({
@@ -22,6 +26,9 @@ export default function UploadWorkspace({
   detectedFilesCount,
   ignoredFoldersCount,
   currentStage,
+  downloadSeparateFiles,
+  setDownloadSeparateFiles,
+  showWarningBanner,
 }: UploadWorkspaceProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPasted, setIsPasted] = useState(false);
@@ -166,7 +173,40 @@ export default function UploadWorkspace({
         )}
       </div>
 
-      <div className="mt-6">
+      {/* Threshold Warning Banner (Smart Download Mode) */}
+      {showWarningBanner && (
+        <div className="mt-4 p-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200 transition-all duration-300 flex gap-3">
+          <svg className="w-5 h-5 shrink-0 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div className="text-xs leading-relaxed font-medium">
+            Total file size exceeds 250 MB. To prevent server timeout, &apos;Download Separate Files&apos; option has been automatically recommended and checked.
+          </div>
+        </div>
+      )}
+
+      {/* Smart Download Mode - Checkbox Toggle Option */}
+      <div className="mt-5 flex items-center gap-2.5">
+        <input
+          type="checkbox"
+          id="separate-files-toggle"
+          checked={downloadSeparateFiles}
+          onChange={(e) => setDownloadSeparateFiles(e.target.checked)}
+          disabled={loading}
+          className="w-4.5 h-4.5 rounded border-slate-300 dark:border-navy-800 text-blue-600 focus:ring-blue-500/20 dark:focus:ring-blue-500/10 focus:ring-2 dark:bg-navy-950 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+        <label
+          htmlFor="separate-files-toggle"
+          className="text-xs font-semibold text-slate-700 dark:text-navy-300 select-none cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+        >
+          <span>Download Separate Files (No ZIP)</span>
+          <span className="text-[10px] font-normal text-slate-400 dark:text-navy-500">
+            (Recommended for large payloads / slow networks)
+          </span>
+        </label>
+      </div>
+
+      <div className="mt-5">
         <button
           onClick={onDownload}
           disabled={detectedFilesCount === 0 || loading}
@@ -188,7 +228,11 @@ export default function UploadWorkspace({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              <span>Assembling ZIP Package...</span>
+              <span>
+                {downloadSeparateFiles
+                  ? "Downloading Separate Files..."
+                  : "Assembling ZIP Package..."}
+              </span>
             </>
           ) : (
             <>
@@ -205,7 +249,9 @@ export default function UploadWorkspace({
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                 />
               </svg>
-              <span>Download ZIP Package</span>
+              <span>
+                {downloadSeparateFiles ? "Download Separate Files" : "Download ZIP Package"}
+              </span>
             </>
           )}
         </button>

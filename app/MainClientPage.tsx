@@ -196,8 +196,12 @@ export default function MainClientPage({
       try {
         await new Promise((r) => setTimeout(r, 600));
         setTimelineStage("metadata");
-        addEvent("info", "Initiating Separate Downloads", `Starting sequential direct downloads for ${files.length} items.`);
+        addEvent("info", "Initiating Separate Downloads", `Starting sequential direct downloads for ${files.length} items with 3.5s spacing.`);
 
+        let successfulCount = 0;
+        const failedFiles: typeof files = [];
+
+        // Main sequential download loop
         for (let i = 0; i < files.length; i++) {
           const item = files[i];
           const meta = filesMetadata.find((m) => m.id === item.id);
@@ -206,25 +210,64 @@ export default function MainClientPage({
           setTimelineStage("packaging");
           addEvent("info", `Downloading File ${i + 1}/${files.length}`, `Downloading file ${i + 1} of ${files.length}: ${displayName}`);
 
-          let iframe: HTMLIFrameElement | null = null;
           try {
             // Create invisible iframe
-            iframe = document.createElement("iframe");
+            const iframe = document.createElement("iframe");
             iframe.style.display = "none";
             iframe.src = `/api/download-single?id=${item.id}`;
             document.body.appendChild(iframe);
 
-            // Wait 3 seconds
-            await new Promise((r) => setTimeout(r, 3000));
-            addEvent("success", `Downloaded ${i + 1}/${files.length}`, `Finished separate file download ${i + 1} of ${files.length}: ${displayName}`);
+            // Clean up iframe completely from DOM after 10 seconds (prolonged to avoid aborting download stream)
+            setTimeout(() => {
+              if (iframe.parentNode) {
+                iframe.parentNode.removeChild(iframe);
+              }
+            }, 10000);
+
+            // Proceed to the next file in the sequence after 3500ms
+            await new Promise((r) => setTimeout(r, 3500));
+            successfulCount++;
+            addEvent("success", `Downloaded ${i + 1}/${files.length}`, `Successfully triggered separate file download ${i + 1} of ${files.length}: ${displayName}`);
           } catch (itemErr) {
             console.error(`Error downloading file ${i + 1}:`, itemErr);
+            failedFiles.push(item);
             const nextFileMsg = (i + 1 < files.length) ? `, skipping to File ${i + 2}...` : ".";
             addEvent("error", "Download Failed", `Failed to download File ${i + 1}: ${displayName}${nextFileMsg}`);
-          } finally {
-            // Safely clean up iframe completely to avoid memory leaks
-            if (iframe && iframe.parentNode) {
-              iframe.parentNode.removeChild(iframe);
+          }
+        }
+
+        // Retry mechanism for failed files at the end
+        if (failedFiles.length > 0) {
+          addEvent("warning", "Retries Scheduled", `Waiting 5 seconds to retry ${failedFiles.length} failed downloads...`);
+          await new Promise((r) => setTimeout(r, 5000));
+          addEvent("warning", "Retrying Downloads", `Retrying ${failedFiles.length} failed download(s)...`);
+
+          for (let i = 0; i < failedFiles.length; i++) {
+            const item = failedFiles[i];
+            const meta = filesMetadata.find((m) => m.id === item.id);
+            const displayName = meta && meta.name !== "unresolved_name" ? meta.name : `File ${item.id}`;
+
+            addEvent("info", `Retrying ${i + 1}/${failedFiles.length}`, `Retrying file ${i + 1} of ${failedFiles.length}: ${displayName}`);
+
+            try {
+              const iframe = document.createElement("iframe");
+              iframe.style.display = "none";
+              iframe.src = `/api/download-single?id=${item.id}`;
+              document.body.appendChild(iframe);
+
+              // Prolonged 10s cleanup
+              setTimeout(() => {
+                if (iframe.parentNode) {
+                  iframe.parentNode.removeChild(iframe);
+                }
+              }, 10000);
+
+              await new Promise((r) => setTimeout(r, 3500));
+              successfulCount++;
+              addEvent("success", `Retry Success ${i + 1}/${failedFiles.length}`, `Successfully downloaded retried file ${displayName}`);
+            } catch (retryErr) {
+              console.error(`Failed on retry for file ${displayName}:`, retryErr);
+              addEvent("error", "Retry Failed", `Failed on retry download for file: ${displayName}`);
             }
           }
         }
@@ -235,7 +278,9 @@ export default function MainClientPage({
         });
         setDownloadSuccess(true);
         setTimelineStage("ready");
-        addEvent("success", "Downloads Finalized", `Successfully processed sequential downloads for all ${files.length} items.`);
+
+        // Display final summary log in ActivityPanel
+        addEvent("success", "Download Complete", `Download finished: ${successfulCount} of ${files.length} files downloaded successfully.`);
 
         // Gentle breath background illumination effect for 800ms
         setIsIlluminated(true);

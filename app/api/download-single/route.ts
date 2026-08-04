@@ -4,6 +4,17 @@ import { GOOGLE_NATIVE_MAPPING } from "@/lib/gdrive";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Helper for exponential backoff/retry logic on Google Drive API 429 status code
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3, delay = 1000): Promise<Response> {
+  const response = await fetch(url, options);
+  if (response.status === 429 && retries > 0) {
+    console.warn(`Google Drive API returned 429 (Rate Limit Exceeded). Retrying in ${delay}ms... (${retries} retries left)`);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    return fetchWithRetry(url, options, retries - 1, delay * 2);
+  }
+  return response;
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -50,7 +61,7 @@ export async function GET(req: Request) {
       metaHeaders["Authorization"] = `Bearer ${accessToken}`;
     }
 
-    const metaRes = await fetch(metaUrl, { headers: metaHeaders });
+    const metaRes = await fetchWithRetry(metaUrl, { headers: metaHeaders });
     if (!metaRes.ok) {
       const status = metaRes.status;
       let errMsg = `Metadata fetch failed with status ${status}`;
@@ -84,7 +95,6 @@ export async function GET(req: Request) {
     // 2. Fetch/export content
     let downloadUrl = "";
     let finalFileName = fileName;
-    let contentType = mimeType;
 
     const nativeMapping = GOOGLE_NATIVE_MAPPING[mimeType];
     if (nativeMapping) {
@@ -93,7 +103,6 @@ export async function GET(req: Request) {
       if (!finalFileName.toLowerCase().endsWith(ext)) {
         finalFileName = finalFileName + ext;
       }
-      contentType = exportMime;
       downloadUrl = `https://www.googleapis.com/drive/v3/files/${id}/export?mimeType=${encodeURIComponent(
         exportMime
       )}${accessToken ? "" : `&key=${apiKey}`}`;
@@ -108,7 +117,7 @@ export async function GET(req: Request) {
       downloadHeaders["Authorization"] = `Bearer ${accessToken}`;
     }
 
-    const downloadRes = await fetch(downloadUrl, { headers: downloadHeaders });
+    const downloadRes = await fetchWithRetry(downloadUrl, { headers: downloadHeaders });
     if (!downloadRes.ok) {
       const status = downloadRes.status;
       let errMsg = `Download failed with status ${status}`;
@@ -127,8 +136,8 @@ export async function GET(req: Request) {
 
     return new Response(fileBuffer, {
       headers: {
-        "Content-Type": contentType || "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${encodeURIComponent(finalFileName)}"`,
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": `attachment; filename="${finalFileName.replace(/"/g, '\\"')}"`,
       },
     });
   } catch (error: unknown) {

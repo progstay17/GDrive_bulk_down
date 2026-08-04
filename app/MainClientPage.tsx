@@ -204,19 +204,28 @@ export default function MainClientPage({
           const displayName = meta && meta.name !== "unresolved_name" ? meta.name : `File ${item.id}`;
 
           setTimelineStage("packaging");
-          addEvent("info", `Downloading ${i + 1}/${files.length}`, `Starting separate file download ${i + 1} of ${files.length}: ${displayName}`);
+          addEvent("info", `Downloading File ${i + 1}/${files.length}`, `Downloading file ${i + 1} of ${files.length}: ${displayName}`);
 
-          // Trigger download link pointing to /api/download-single?id=<id>
-          const a = document.createElement("a");
-          a.href = `/api/download-single?id=${item.id}`;
-          a.style.display = "none";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
+          let iframe: HTMLIFrameElement | null = null;
+          try {
+            // Create invisible iframe
+            iframe = document.createElement("iframe");
+            iframe.style.display = "none";
+            iframe.src = `/api/download-single?id=${item.id}`;
+            document.body.appendChild(iframe);
 
-          // 1200ms delay to avoid popup blocking
-          if (i < files.length - 1) {
-            await new Promise((r) => setTimeout(r, 1200));
+            // Wait 3 seconds
+            await new Promise((r) => setTimeout(r, 3000));
+            addEvent("success", `Downloaded ${i + 1}/${files.length}`, `Finished separate file download ${i + 1} of ${files.length}: ${displayName}`);
+          } catch (itemErr) {
+            console.error(`Error downloading file ${i + 1}:`, itemErr);
+            const nextFileMsg = (i + 1 < files.length) ? `, skipping to File ${i + 2}...` : ".";
+            addEvent("error", "Download Failed", `Failed to download File ${i + 1}: ${displayName}${nextFileMsg}`);
+          } finally {
+            // Safely clean up iframe completely to avoid memory leaks
+            if (iframe && iframe.parentNode) {
+              iframe.parentNode.removeChild(iframe);
+            }
           }
         }
 
@@ -226,7 +235,7 @@ export default function MainClientPage({
         });
         setDownloadSuccess(true);
         setTimelineStage("ready");
-        addEvent("success", "Downloads Triggered", `Successfully started individual downloads for all ${files.length} items.`);
+        addEvent("success", "Downloads Finalized", `Successfully processed sequential downloads for all ${files.length} items.`);
 
         // Gentle breath background illumination effect for 800ms
         setIsIlluminated(true);

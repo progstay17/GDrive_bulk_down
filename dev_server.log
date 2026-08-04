@@ -6,10 +6,42 @@
   - Local:        http://localhost:3000
 
  ✓ Starting...
- ✓ Ready in 1736ms
+ ✓ Ready in 2.6s
  ○ Compiling / ...
- ✓ Compiled / in 6.8s (556 modules)
- ✓ Compiled in 704ms (256 modules)
- GET / 200 in 7545ms
- GET / 200 in 52ms
- GET / 200 in 38ms
+ ✓ Compiled / in 6.2s (556 modules)
+ ✓ Compiled in 610ms (256 modules)
+ GET / 200 in 6885ms
+ ○ Compiling /api/files-metadata ...
+ ✓ Compiled /api/files-metadata in 4.1s (308 modules)
+Error in files-metadata endpoint: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at parseJSONFromBytes (node:internal/deps/undici/undici:5852:19)
+    at successSteps (node:internal/deps/undici/undici:5833:27)
+    at consumeBody (node:internal/deps/undici/undici:5839:9)
+    at NextRequest.json (node:internal/deps/undici/undici:5779:18)
+    at POST (webpack-internal:///(rsc)/./app/api/files-metadata/route.ts:13:39)
+    at /app/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /app/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/app/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/app/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/app/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/app/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /app/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/app/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/app/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/app/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /app/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/app/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /app/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/app/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /app/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/app/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/app/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/app/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/app/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/app/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/app/node_modules/next/dist/server/base-server.js:1496:53)
+ GET / 200 in 142ms

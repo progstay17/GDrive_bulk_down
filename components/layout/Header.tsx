@@ -35,11 +35,11 @@ export default function Header({
         <div className="flex items-center gap-4">
           {/* GitHub Link */}
           <a
-            href="https://github.com/gdrive-zip" // Replace with real repo link if desired, otherwise is premium placeholder
+            href="https://github.com/progstay17/GDrive_bulk_down"
             target="_blank"
             rel="noopener noreferrer"
             className="p-2 text-slate-600 dark:text-navy-300 hover:text-blue-600 dark:hover:text-blue-400 transition"
-            aria-label="GitHub Repository"
+            aria-label="View source on GitHub"
           >
             <svg
               viewBox="0 0 24 24"
@@ -79,7 +79,7 @@ export default function Header({
                   className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-3 rounded-lg shadow-sm hover:shadow transition"
                 >
                   <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                    <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 5.92 1 1 5.92 1 12s4.92 11 11.24 11c6.59 0 11.01-4.604 11.01-11 0-.743-.08-1.32-.175-1.715H12.24z" />
+                    <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 5.92 1 12s4.92 11 11.24 11c6.59 0 11.01-4.604 11.01-11 0-.743-.08-1.32-.175-1.715H12.24z" />
                   </svg>
                   <span className="hidden sm:inline">Google Auth</span>
                 </a>

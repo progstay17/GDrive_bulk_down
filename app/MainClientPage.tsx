@@ -211,7 +211,14 @@ export default function MainClientPage({
           addEvent("info", `Downloading File ${i + 1}/${files.length}`, `Downloading file ${i + 1} of ${files.length}: ${displayName}`);
 
           try {
-            // Create invisible iframe
+            // Pre-check via HEAD before triggering the invisible iframe — an iframe
+            // pointed at an error response fails completely silently, so we need to
+            // know it's actually downloadable first.
+            const checkRes = await fetch(`/api/download-single?id=${item.id}`, { method: "HEAD" });
+            if (!checkRes.ok) {
+              throw new Error(`Pre-check gagal (status ${checkRes.status})`);
+            }
+
             const iframe = document.createElement("iframe");
             iframe.style.display = "none";
             iframe.src = `/api/download-single?id=${item.id}`;
@@ -232,7 +239,8 @@ export default function MainClientPage({
             console.error(`Error downloading file ${i + 1}:`, itemErr);
             failedFiles.push(item);
             const nextFileMsg = (i + 1 < files.length) ? `, skipping to File ${i + 2}...` : ".";
-            addEvent("error", "Download Failed", `Failed to download File ${i + 1}: ${displayName}${nextFileMsg}`);
+            const reason = itemErr instanceof Error ? itemErr.message : "unknown error";
+            addEvent("error", "Download Failed", `Failed to download File ${i + 1}: ${displayName} (${reason})${nextFileMsg}`);
           }
         }
 
@@ -250,6 +258,11 @@ export default function MainClientPage({
             addEvent("info", `Retrying ${i + 1}/${failedFiles.length}`, `Retrying file ${i + 1} of ${failedFiles.length}: ${displayName}`);
 
             try {
+              const checkRes = await fetch(`/api/download-single?id=${item.id}`, { method: "HEAD" });
+              if (!checkRes.ok) {
+                throw new Error(`Pre-check gagal (status ${checkRes.status})`);
+              }
+
               const iframe = document.createElement("iframe");
               iframe.style.display = "none";
               iframe.src = `/api/download-single?id=${item.id}`;
@@ -266,8 +279,9 @@ export default function MainClientPage({
               successfulCount++;
               addEvent("success", `Retry Success ${i + 1}/${failedFiles.length}`, `Successfully downloaded retried file ${displayName}`);
             } catch (retryErr) {
+              const reason = retryErr instanceof Error ? retryErr.message : "unknown error";
               console.error(`Failed on retry for file ${displayName}:`, retryErr);
-              addEvent("error", "Retry Failed", `Failed on retry download for file: ${displayName}`);
+              addEvent("error", "Retry Failed", `Failed on retry download for file: ${displayName} (${reason})`);
             }
           }
         }

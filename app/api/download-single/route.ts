@@ -15,6 +15,71 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 3, de
   return response;
 }
 
+// Validates that a file exists and is accessible, WITHOUT downloading its
+// content. Used by the frontend to pre-check before triggering the iframe
+// download, so failures (private file, bad ID, etc.) surface as a visible
+// error instead of silently failing inside an invisible iframe.
+export async function HEAD(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return new Response(null, { status: 400 });
+    }
+
+    const apiKey = process.env.DRIVE_API_KEY;
+    const enableOAuth = process.env.ENABLE_OAUTH_LOGIN === "true";
+
+    let accessToken: string | undefined = undefined;
+    try {
+      const { cookies } = await import("next/headers");
+      const cookieStore = cookies();
+      const sessionCookie = cookieStore.get("gdrive_session")?.value;
+      if (sessionCookie && enableOAuth) {
+        const { getSessionToken } = await import("@/lib/session-helper").catch(() => ({
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          getSessionToken: async (_cookie?: string) => undefined as string | undefined
+        }));
+        accessToken = await getSessionToken(sessionCookie);
+      }
+    } catch {
+      // Ignore session errors
+    }
+
+    if (!apiKey && !accessToken) {
+      return new Response(null, { status: 500 });
+    }
+
+    const metaUrl = `https://www.googleapis.com/drive/v3/files/${id}?fields=name,mimeType${
+      accessToken ? "" : `&key=${apiKey}`
+    }`;
+    const metaHeaders: Record<string, string> = {};
+    if (accessToken) {
+      metaHeaders["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    const metaRes = await fetchWithRetry(metaUrl, { headers: metaHeaders });
+    if (!metaRes.ok) {
+      return new Response(null, { status: metaRes.status });
+    }
+
+    const metadata = await metaRes.json();
+    const mimeType = metadata.mimeType || "";
+
+    if (mimeType === "application/vnd.google-apps.folder") {
+      return new Response(null, { status: 400 });
+    }
+    if (mimeType.startsWith("application/vnd.google-apps.") && !GOOGLE_NATIVE_MAPPING[mimeType]) {
+      return new Response(null, { status: 400 });
+    }
+
+    return new Response(null, { status: 200 });
+  } catch {
+    return new Response(null, { status: 500 });
+  }
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -132,9 +197,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: errMsg }, { status });
     }
 
-    const fileBuffer = await downloadRes.arrayBuffer();
+    if (!downloadRes.body) {
+      return NextResponse.json({ error: "Response body kosong dari Google Drive API." }, { status: 502 });
+    }
 
-    return new Response(fileBuffer, {
+    // Stream the file straight through instead of buffering the whole thing
+    // into memory first — matters most for large files.
+    return new Response(downloadRes.body, {
       headers: {
         "Content-Type": "application/octet-stream",
         "Content-Disposition": `attachment; filename="${finalFileName.replace(/"/g, '\\"')}"`,

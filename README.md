@@ -4,9 +4,19 @@
 
 </div>
 
-# GDrive Batch Zip Downloader
+# AIT Drive Downloader
 
-GDrive Batch Zip Downloader adalah aplikasi web modern, ringan, dan mandiri yang dibangun menggunakan **Next.js 14 (App Router)**, **TypeScript**, dan **Tailwind CSS**. Aplikasi ini memungkinkan pengguna untuk menempelkan banyak tautan Google Drive sekaligus, mengekstrak ID file secara otomatis, mengunduh file tersebut di sisi server, mengompresnya menjadi satu berkas `.zip`, dan mengirimkannya kembali ke peramban secara real-time menggunakan teknik **Zip Streaming**.
+Batch Google Drive links into one organized ZIP. Built with Next.js, TypeScript, and streaming downloads, with support for public files and optional OAuth workflows.
+
+> **Ghifarion** · Engineering Intelligence. Building Legacy.
+
+## On this page
+
+- [Fitur utama](#fitur-utama)
+- [Supported URLs](#format-url-yang-didukung)
+- [Local setup](#langkah-setup-instalasi-lokal)
+- [Run locally](#jalankan-di-lingkungan-lokal)
+- [Deployment](#deployment-ke-vercel)
 
 ---
 
